@@ -8,9 +8,7 @@ import jetbrains.buildServer.configs.kotlin.buildSteps.dockerCompose
 import jetbrains.buildServer.configs.kotlin.buildSteps.gradle
 import jetbrains.buildServer.configs.kotlin.buildSteps.script
 import jetbrains.buildServer.configs.kotlin.buildSteps.sshExec
-import jetbrains.buildServer.configs.kotlin.buildSteps.sshUpload
 import jetbrains.buildServer.configs.kotlin.triggers.vcs
-import jetbrains.buildServer.configs.kotlin.vcs.GitVcsRoot
 
 version = "2023.05"
 
@@ -37,6 +35,7 @@ open class ServerBuildType(
         private val deployTargetPort: String,
         private val deployTargetUsername: String,
 ) : BuildType({
+    id("YozmCafe_Server_${buildMode}")
     name = "Server:${buildMode}"
     description = "서버 CI/CD (branch=${branch})"
 
@@ -119,6 +118,7 @@ open class ClientBuildType(
         private val deployTargetPort: String,
         private val deployTargetUsername: String,
 ) : BuildType({
+    id("YozmCafe_Client_${buildMode}")
     name = "Client:${buildMode}"
     description = "클라이언트 CI/CD (branch=${branch})"
 
