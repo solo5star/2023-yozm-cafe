@@ -47,27 +47,25 @@ project {
     vcsRoot(gitHubDev)
 
     // 4개의 빌드 설정을 추가합니다
-    buildType(ServerBuildType("prod", gitHubProd, "main", deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
-    buildType(ServerBuildType("dev", gitHubDev, "dev", deployTargetDevHost, deployTargetDevPort, deployTargetDevUsername))
-    buildType(ClientBuildType("prod", gitHubProd, "main", deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
-    buildType(ClientBuildType("dev", gitHubDev, "dev", deployTargetDevHost, deployTargetDevPort, deployTargetDevUsername))
+    buildType(ServerBuildType("prod", gitHubProd, deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
+    buildType(ServerBuildType("dev", gitHubDev, deployTargetDevHost, deployTargetDevPort, deployTargetDevUsername))
+    buildType(ClientBuildType("prod", gitHubProd, deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
+    buildType(ClientBuildType("dev", gitHubDev, deployTargetDevHost, deployTargetDevPort, deployTargetDevUsername))
 }
 
 open class ServerBuildType(
         private val buildMode: String,
         private val vcsRoot: VcsRoot,
-        private val branch: String,
         private val deployTargetHost: String,
         private val deployTargetPort: String,
         private val deployTargetUsername: String,
 ) : BuildType({
     id("YozmCafe_Server_$buildMode")
     name = "Server:$buildMode"
-    description = "서버 CI/CD (branch=$branch)"
+    description = "서버 CI/CD"
 
     vcs {
         root(vcsRoot)
-        branchFilter = "+:$branch"
         cleanCheckout = true
     }
 
@@ -125,7 +123,6 @@ open class ServerBuildType(
     triggers {
         vcs {
             triggerRules = "+:/server"
-            branchFilter = "+:$branch"
         }
     }
 
@@ -139,20 +136,18 @@ open class ServerBuildType(
 })
 
 open class ClientBuildType(
-        private val branch: String,
-        private val vcsRoot: VcsRoot,
         private val buildMode: String,
+        private val vcsRoot: VcsRoot,
         private val deployTargetHost: String,
         private val deployTargetPort: String,
         private val deployTargetUsername: String,
 ) : BuildType({
     id("YozmCafe_Client_$buildMode")
     name = "Client:$buildMode"
-    description = "클라이언트 CI/CD (branch=$branch)"
+    description = "클라이언트 CI/CD"
 
     vcs {
         root(vcsRoot)
-        branchFilter = "+:$branch"
         cleanCheckout = true
     }
 
@@ -186,7 +181,6 @@ open class ClientBuildType(
     triggers {
         vcs {
             triggerRules = "+:/client"
-            branchFilter = "+:$branch"
         }
     }
 
