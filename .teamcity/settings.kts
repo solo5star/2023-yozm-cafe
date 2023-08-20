@@ -17,17 +17,28 @@ version = "2023.05"
 project {
     description = "yozm.cafe 프로젝트의 CI/CD 파이프라인 스크립트입니다"
 
-    buildType(Server)
-    buildType(Client)
+    val deployTargetProdHost = DslContext.getParameter("deploy_target.prod.host")
+    val deployTargetProdPort = DslContext.getParameter("deploy_target.prod.port").toInt()
+    val deployTargetProdUsername = DslContext.getParameter("deploy_target.prod.username")
+    val deployTargetDevHost = DslContext.getParameter("deploy_target.dev.host")
+    val deployTargetDevPort = DslContext.getParameter("deploy_target.dev.port").toInt()
+    val deployTargetDevUsername = DslContext.getParameter("deploy_target.dev.username")
 
-    params {
-        param("DEV_DEPLOY_TARGET_URL", DslContext.getParameter("dev.deploy.target_url"))
-        param("PROD_DEPLOY_TARGET_URL", DslContext.getParameter("prod.deploy.target_url"))
-    }
+    buildType(ServerBuildType("main", "prod", deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
+    buildType(ServerBuildType("dev", "dev", deployTargetDevHost, deployTargetDevPort, deployTargetDevUsername))
+    buildType(ClientBuildType("main", "prod", deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
+    buildType(ClientBuildType("dev", "dev", deployTargetDevHost, deployTargetDevPort, deployTargetDevUsername))
 }
 
-object Server : BuildType({
-    name = "Server"
+open class ServerBuildType(
+        private val branch: String,
+        private val buildMode: String,
+        private val deployTargetHost: String,
+        private val deployTargetPort: Int,
+        private val deployTargetUsername: String,
+) : BuildType({
+    name = "Server:${buildMode}"
+    description = "서버 CI/CD (branch=${branch})"
 
     vcs {
         root(DslContext.settingsRoot)
@@ -35,8 +46,9 @@ object Server : BuildType({
     }
 
     params {
-        param("BUILD_MODE", "dev")
-        param("DEPLOY_TARGET_URL", "%DEV_DEPLOY_TARGET_URL%")
+        param("DEPLOY_TARGET_HOST", deployTargetHost)
+        param("DEPLOY_TARGET_PORT", deployTargetPort.toString())
+        param("DEPLOY_TARGET_USERNAME", deployTargetUsername)
     }
 
     steps {
@@ -53,16 +65,17 @@ object Server : BuildType({
             name = "빌드"
             tasks = "clean build"
             buildFile = "server/build.gradle"
-            gradleParams = "-Pprofile=%BUILD_MODE%"
+            gradleParams = "-Pprofile=${buildMode}"
             gradleWrapperPath = "server"
         }
         sshUpload {
             name = "빌드 파일 업로드"
             transportProtocol = SSHUpload.TransportProtocol.SCP
             sourcePath = "server/build/libs/yozm-cafe-0.0.1-SNAPSHOT.jar"
-            targetUrl = "%DEPLOY_TARGET_URL%"
+            targetUrl = "%DEPLOY_TARGET_HOST%"
+            param("jetbrains.buildServer.sshexec.port", "")
             authMethod = sshAgent {
-                username = "ubuntu"
+                username = "%DEPLOY_TARGET_USERNAME%"
             }
         }
         sshExec {
@@ -75,9 +88,10 @@ object Server : BuildType({
                 
                 nohup java -jar yozm-cafe-0.0.1-SNAPSHOT.jar > nohup.out 2> nohup.err < /dev/null &
             """.trimIndent()
-            targetUrl = "%DEPLOY_TARGET_URL%"
+            targetUrl = "%DEPLOY_TARGET_HOST%"
+            param("jetbrains.buildServer.sshexec.port", "")
             authMethod = sshAgent {
-                username = "ubuntu"
+                username = "%DEPLOY_TARGET_USERNAME%"
             }
         }
     }
@@ -85,15 +99,7 @@ object Server : BuildType({
     triggers {
         vcs {
             triggerRules = "+:/server"
-            branchFilter = "+:main"
-            buildParams {
-                param("BUILD_MODE", "prod")
-                param("DEPLOY_TARGET_URL", "%PROD_DEPLOY_TARGET_URL%")
-            }
-        }
-        vcs {
-            triggerRules = "+:/server"
-            branchFilter = "+:dev"
+            branchFilter = "+:${branch}"
         }
     }
 
@@ -106,8 +112,15 @@ object Server : BuildType({
     }
 })
 
-object Client : BuildType({
-    name = "Client"
+open class ClientBuildType(
+        private val branch: String,
+        private val buildMode: String,
+        private val deployTargetHost: String,
+        private val deployTargetPort: Int,
+        private val deployTargetUsername: String,
+) : BuildType({
+    name = "Client:${buildMode}"
+    description = "클라이언트 CI/CD (branch=${branch})"
 
     vcs {
         root(DslContext.settingsRoot)
@@ -115,8 +128,9 @@ object Client : BuildType({
     }
 
     params {
-        param("BUILD_MODE", "dev")
-        param("DEPLOY_TARGET_URL", "%DEV_DEPLOY_TARGET_URL%")
+        param("DEPLOY_TARGET_HOST", deployTargetHost)
+        param("DEPLOY_TARGET_PORT", deployTargetPort.toString())
+        param("DEPLOY_TARGET_USERNAME", deployTargetUsername)
     }
 
     steps {
@@ -132,9 +146,10 @@ object Client : BuildType({
             name = "Deploy build files"
             transportProtocol = SSHUpload.TransportProtocol.SCP
             sourcePath = "client/dist/**"
-            targetUrl = "%DEPLOY_TARGET_URL%:public"
+            targetUrl = "%DEPLOY_TARGET_HOST%:public"
+            param("jetbrains.buildServer.sshexec.port", "")
             authMethod = sshAgent {
-                username = "ubuntu"
+                username = "%DEPLOY_TARGET_USERNAME%"
             }
         }
     }
@@ -142,15 +157,7 @@ object Client : BuildType({
     triggers {
         vcs {
             triggerRules = "+:/client"
-            branchFilter = "+:main"
-            buildParams {
-                param("BUILD_MODE", "prod")
-                param("DEPLOY_TARGET_URL", "%PROD_DEPLOY_TARGET_URL%")
-            }
-        }
-        vcs {
-            triggerRules = "+:/client"
-            branchFilter = "+:dev"
+            branchFilter = "+:${branch}"
         }
     }
 
