@@ -19,6 +19,11 @@ project {
 
     buildType(Server)
     buildType(Client)
+
+    params {
+        param("DEV_DEPLOY_TARGET_URL", DslContext.getParameter("dev.deploy.target_url"))
+        param("PROD_DEPLOY_TARGET_URL", DslContext.getParameter("prod.deploy.target_url"))
+    }
 }
 
 object Server : BuildType({
@@ -30,8 +35,8 @@ object Server : BuildType({
     }
 
     params {
-        param("BuildMode", "dev")
-        param("DeployTargetUrl", "%DevDeployTargetUrl%")
+        param("BUILD_MODE", "dev")
+        param("DEPLOY_TARGET_URL", "%DEV_DEPLOY_TARGET_URL%")
     }
 
     steps {
@@ -48,14 +53,14 @@ object Server : BuildType({
             name = "빌드"
             tasks = "clean build"
             buildFile = "server/build.gradle"
-            gradleParams = "-Pprofile=%BuildMode%"
+            gradleParams = "-Pprofile=%BUILD_MODE%"
             gradleWrapperPath = "server"
         }
         sshUpload {
             name = "빌드 파일 업로드"
             transportProtocol = SSHUpload.TransportProtocol.SCP
             sourcePath = "server/build/libs/yozm-cafe-0.0.1-SNAPSHOT.jar"
-            targetUrl = DslContext.getParameter("env.DEPLOY_TARGET_URL")
+            targetUrl = "%DEPLOY_TARGET_URL%"
             authMethod = sshAgent {
                 username = "ubuntu"
             }
@@ -70,7 +75,7 @@ object Server : BuildType({
                 
                 nohup java -jar yozm-cafe-0.0.1-SNAPSHOT.jar > nohup.out 2> nohup.err < /dev/null &
             """.trimIndent()
-            targetUrl = "%DeployTargetUrl%"
+            targetUrl = "%DEPLOY_TARGET_URL%"
             authMethod = sshAgent {
                 username = "ubuntu"
             }
@@ -82,17 +87,13 @@ object Server : BuildType({
             triggerRules = "+:/server"
             branchFilter = "+:main"
             buildParams {
-                param("BuildMode", "prod")
-                param("DeployTargetUrl", "%ProdDeployTargetUrl%")
+                param("BUILD_MODE", "prod")
+                param("DEPLOY_TARGET_URL", "%PROD_DEPLOY_TARGET_URL%")
             }
         }
         vcs {
             triggerRules = "+:/server"
             branchFilter = "+:dev"
-            buildParams {
-                param("BuildMode", "dev")
-                param("DeployTargetUrl", "%DevDeployTargetUrl%")
-            }
         }
     }
 
@@ -114,8 +115,8 @@ object Client : BuildType({
     }
 
     params {
-        param("BuildMode", "dev")
-        param("DeployTargetUrl", "%DevDeployTargetUrl%")
+        param("BUILD_MODE", "dev")
+        param("DEPLOY_TARGET_URL", "%DEV_DEPLOY_TARGET_URL%")
     }
 
     steps {
@@ -131,7 +132,7 @@ object Client : BuildType({
             name = "Deploy build files"
             transportProtocol = SSHUpload.TransportProtocol.SCP
             sourcePath = "client/dist/**"
-            targetUrl = "%DeployTargetUrl%:public"
+            targetUrl = "%DEPLOY_TARGET_URL%:public"
             authMethod = sshAgent {
                 username = "ubuntu"
             }
@@ -143,17 +144,13 @@ object Client : BuildType({
             triggerRules = "+:/client"
             branchFilter = "+:main"
             buildParams {
-                param("BuildMode", "prod")
-                param("DeployTargetUrl", "%ProdDeployTargetUrl%")
+                param("BUILD_MODE", "prod")
+                param("DEPLOY_TARGET_URL", "%PROD_DEPLOY_TARGET_URL%")
             }
         }
         vcs {
             triggerRules = "+:/client"
             branchFilter = "+:dev"
-            buildParams {
-                param("BuildMode", "dev")
-                param("DeployTargetUrl", "%DevDeployTargetUrl%")
-            }
         }
     }
 
