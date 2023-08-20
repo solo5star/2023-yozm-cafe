@@ -19,10 +19,6 @@ project {
 
     buildType(Server)
     buildType(Client)
-
-    params {
-        select("env.ENVIRONMENT_MODE", "dev", options = listOf("prod", "dev"))
-    }
 }
 
 object Server : BuildType({
@@ -34,8 +30,8 @@ object Server : BuildType({
     }
 
     params {
-        param("env.APPLICATION_DEV", """
-        """.trimIndent())
+        param("BuildMode", "dev")
+        param("DeployTargetUrl", "%DevDeployTargetUrl%")
     }
 
     steps {
@@ -52,7 +48,7 @@ object Server : BuildType({
             name = "빌드"
             tasks = "clean build"
             buildFile = "server/build.gradle"
-            gradleParams = "-Pprofile=${DslContext.getParameter("env.ENVIRONMENT_MODE")}"
+            gradleParams = "-Pprofile=%BuildMode%"
             gradleWrapperPath = "server"
         }
         sshUpload {
@@ -74,7 +70,7 @@ object Server : BuildType({
                 
                 nohup java -jar yozm-cafe-0.0.1-SNAPSHOT.jar > nohup.out 2> nohup.err < /dev/null &
             """.trimIndent()
-            targetUrl = DslContext.getParameter("env.DEPLOY_TARGET_URL")
+            targetUrl = "%DeployTargetUrl%"
             authMethod = sshAgent {
                 username = "ubuntu"
             }
@@ -86,16 +82,16 @@ object Server : BuildType({
             triggerRules = "+:/server"
             branchFilter = "+:main"
             buildParams {
-                param("env.ENVIRONMENT_MODE", "prod")
-                param("env.DEPLOY_TARGET_URL", DslContext.getParameter("ProdUrl"))
+                param("BuildMode", "prod")
+                param("DeployTargetUrl", "%ProdDeployTargetUrl%")
             }
         }
         vcs {
             triggerRules = "+:/server"
             branchFilter = "+:dev"
             buildParams {
-                param("env.ENVIRONMENT_MODE", "dev")
-                param("env.DEPLOY_TARGET_URL", DslContext.getParameter("DevUrl"))
+                param("BuildMode", "dev")
+                param("DeployTargetUrl", "%DevDeployTargetUrl%")
             }
         }
     }
@@ -117,6 +113,11 @@ object Client : BuildType({
         cleanCheckout = true
     }
 
+    params {
+        param("BuildMode", "dev")
+        param("DeployTargetUrl", "%DevDeployTargetUrl%")
+    }
+
     steps {
         nodeJS {
             name = "Install dependencies and build"
@@ -130,7 +131,7 @@ object Client : BuildType({
             name = "Deploy build files"
             transportProtocol = SSHUpload.TransportProtocol.SCP
             sourcePath = "client/dist/**"
-            targetUrl = "${DslContext.getParameter("env.DEPLOY_TARGET_URL")}:public"
+            targetUrl = "%DeployTargetUrl%:public"
             authMethod = sshAgent {
                 username = "ubuntu"
             }
@@ -142,14 +143,16 @@ object Client : BuildType({
             triggerRules = "+:/client"
             branchFilter = "+:main"
             buildParams {
-                param("env.DEPLOY_TARGET_URL", DslContext.getParameter("ProdUrl"))
+                param("BuildMode", "prod")
+                param("DeployTargetUrl", "%ProdDeployTargetUrl%")
             }
         }
         vcs {
             triggerRules = "+:/client"
             branchFilter = "+:dev"
             buildParams {
-                param("env.DEPLOY_TARGET_URL", DslContext.getParameter("DevUrl"))
+                param("BuildMode", "dev")
+                param("DeployTargetUrl", "%DevDeployTargetUrl%")
             }
         }
     }
