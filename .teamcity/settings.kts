@@ -18,10 +18,10 @@ project {
     description = "yozm.cafe 프로젝트의 CI/CD 파이프라인 스크립트입니다"
 
     val deployTargetProdHost = DslContext.getParameter("deploy_target.prod.host")
-    val deployTargetProdPort = DslContext.getParameter("deploy_target.prod.port").toInt()
+    val deployTargetProdPort = DslContext.getParameter("deploy_target.prod.port")
     val deployTargetProdUsername = DslContext.getParameter("deploy_target.prod.username")
     val deployTargetDevHost = DslContext.getParameter("deploy_target.dev.host")
-    val deployTargetDevPort = DslContext.getParameter("deploy_target.dev.port").toInt()
+    val deployTargetDevPort = DslContext.getParameter("deploy_target.dev.port")
     val deployTargetDevUsername = DslContext.getParameter("deploy_target.dev.username")
 
     buildType(ServerBuildType("main", "prod", deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
@@ -34,7 +34,7 @@ open class ServerBuildType(
         private val branch: String,
         private val buildMode: String,
         private val deployTargetHost: String,
-        private val deployTargetPort: Int,
+        private val deployTargetPort: String,
         private val deployTargetUsername: String,
 ) : BuildType({
     name = "Server:${buildMode}"
@@ -47,7 +47,7 @@ open class ServerBuildType(
 
     params {
         param("DEPLOY_TARGET_HOST", deployTargetHost)
-        param("DEPLOY_TARGET_PORT", deployTargetPort.toString())
+        param("DEPLOY_TARGET_PORT", deployTargetPort)
         param("DEPLOY_TARGET_USERNAME", deployTargetUsername)
     }
 
@@ -116,7 +116,7 @@ open class ClientBuildType(
         private val branch: String,
         private val buildMode: String,
         private val deployTargetHost: String,
-        private val deployTargetPort: Int,
+        private val deployTargetPort: String,
         private val deployTargetUsername: String,
 ) : BuildType({
     name = "Client:${buildMode}"
@@ -129,7 +129,7 @@ open class ClientBuildType(
 
     params {
         param("DEPLOY_TARGET_HOST", deployTargetHost)
-        param("DEPLOY_TARGET_PORT", deployTargetPort.toString())
+        param("DEPLOY_TARGET_PORT", deployTargetPort)
         param("DEPLOY_TARGET_USERNAME", deployTargetUsername)
     }
 
