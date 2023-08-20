@@ -15,7 +15,6 @@ import jetbrains.buildServer.configs.kotlin.vcs.GitVcsRoot
 version = "2023.05"
 
 project {
-    name = "2023-yozm-cafe"
     description = "yozm.cafe 프로젝트의 CI/CD 파이프라인 스크립트입니다"
 
     buildType(Server)
