@@ -28,6 +28,7 @@ project {
     description = "yozm.cafe 프로젝트의 CI/CD 파이프라인 스크립트입니다"
 
     val gitHubProd = GitVcsRoot {
+        id = RelativeId("ProdVcs")
         name = "2023-yozm-cafe prod"
         url = repository
         branch = "main"
@@ -35,6 +36,7 @@ project {
     }
 
     val gitHubDev = GitVcsRoot {
+        id = RelativeId("DevVcs")
         name = "2023-yozm-cafe dev"
         url = repository
         branch = "dev"
