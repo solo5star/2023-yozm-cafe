@@ -19,6 +19,10 @@ project {
 
     buildType(Server)
     buildType(Client)
+
+    params {
+        select("env.ENVIRONMENT_MODE", "dev", options = listOf("prod", "dev"))
+    }
 }
 
 object Server : BuildType({
@@ -83,7 +87,7 @@ object Server : BuildType({
             branchFilter = "+:main"
             buildParams {
                 param("env.ENVIRONMENT_MODE", "prod")
-                param("env.DEPLOY_TARGET_URL", DslContext.getParameter("DeployTargetProdUrl"))
+                param("env.DEPLOY_TARGET_URL", DslContext.getParameter("ProdUrl"))
             }
         }
         vcs {
@@ -91,7 +95,7 @@ object Server : BuildType({
             branchFilter = "+:dev"
             buildParams {
                 param("env.ENVIRONMENT_MODE", "dev")
-                param("env.DEPLOY_TARGET_URL", DslContext.getParameter("DeployTargetDevUrl"))
+                param("env.DEPLOY_TARGET_URL", DslContext.getParameter("DevUrl"))
             }
         }
     }
@@ -138,14 +142,14 @@ object Client : BuildType({
             triggerRules = "+:/client"
             branchFilter = "+:main"
             buildParams {
-                param("env.DEPLOY_TARGET_URL", DslContext.getParameter("DeployTargetProdUrl"))
+                param("env.DEPLOY_TARGET_URL", DslContext.getParameter("ProdUrl"))
             }
         }
         vcs {
             triggerRules = "+:/client"
             branchFilter = "+:dev"
             buildParams {
-                param("env.DEPLOY_TARGET_URL", DslContext.getParameter("DeployTargetDevUrl"))
+                param("env.DEPLOY_TARGET_URL", DslContext.getParameter("DevUrl"))
             }
         }
     }
