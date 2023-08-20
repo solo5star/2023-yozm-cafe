@@ -9,31 +9,49 @@ import jetbrains.buildServer.configs.kotlin.buildSteps.gradle
 import jetbrains.buildServer.configs.kotlin.buildSteps.script
 import jetbrains.buildServer.configs.kotlin.buildSteps.sshExec
 import jetbrains.buildServer.configs.kotlin.triggers.vcs
+import jetbrains.buildServer.configs.kotlin.vcs.GitVcsRoot
 
 version = "2023.05"
+
+// TeamCity에 프로젝트를 추가할 때 입력해야 하는 초기 값들입니다
+val repository = DslContext.getParameter("repository", "https://github.com/woowacourse-teams/2023-yozm-cafe")
+
+// 배포 대상 서버의 정보(host, port, username)을 입력합니다.
+val deployTargetProdHost = DslContext.getParameter("deploy_target.prod.host")
+val deployTargetProdPort = DslContext.getParameter("deploy_target.prod.port")
+val deployTargetProdUsername = DslContext.getParameter("deploy_target.prod.username")
+val deployTargetDevHost = DslContext.getParameter("deploy_target.dev.host")
+val deployTargetDevPort = DslContext.getParameter("deploy_target.dev.port")
+val deployTargetDevUsername = DslContext.getParameter("deploy_target.dev.username")
+
+object GitHubProd : GitVcsRoot({
+    name = "2023-yozm-cafe prod"
+    url = repository
+    branch = "main"
+    branchSpec = "+:refs/heads/main"
+})
+
+object GitHubDev : GitVcsRoot({
+    name = "2023-yozm-cafe dev"
+    url = repository
+    branch = "dev"
+    branchSpec = "+:refs/heads/dev"
+})
 
 project {
     description = "yozm.cafe 프로젝트의 CI/CD 파이프라인 스크립트입니다"
 
-    // TeamCity에 프로젝트를 추가할 때 입력해야 하는 초기 값들입니다
-    // 배포 대상 서버의 정보(host, port, username)을 입력합니다.
-    val deployTargetProdHost = DslContext.getParameter("deploy_target.prod.host")
-    val deployTargetProdPort = DslContext.getParameter("deploy_target.prod.port")
-    val deployTargetProdUsername = DslContext.getParameter("deploy_target.prod.username")
-    val deployTargetDevHost = DslContext.getParameter("deploy_target.dev.host")
-    val deployTargetDevPort = DslContext.getParameter("deploy_target.dev.port")
-    val deployTargetDevUsername = DslContext.getParameter("deploy_target.dev.username")
-
     // 4개의 빌드 설정을 추가합니다
-    buildType(ServerBuildType("main", "prod", deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
-    buildType(ServerBuildType("dev", "dev", deployTargetDevHost, deployTargetDevPort, deployTargetDevUsername))
-    buildType(ClientBuildType("main", "prod", deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
-    buildType(ClientBuildType("dev", "dev", deployTargetDevHost, deployTargetDevPort, deployTargetDevUsername))
+    buildType(ServerBuildType("prod", GitHubProd, "main", deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
+    buildType(ServerBuildType("dev", GitHubDev, "dev", deployTargetDevHost, deployTargetDevPort, deployTargetDevUsername))
+    buildType(ClientBuildType("prod", GitHubProd, "main", deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
+    buildType(ClientBuildType("dev", GitHubDev, "dev", deployTargetDevHost, deployTargetDevPort, deployTargetDevUsername))
 }
 
 open class ServerBuildType(
-        private val branch: String,
         private val buildMode: String,
+        private val vcsRoot: VcsRoot,
+        private val branch: String,
         private val deployTargetHost: String,
         private val deployTargetPort: String,
         private val deployTargetUsername: String,
@@ -43,7 +61,7 @@ open class ServerBuildType(
     description = "서버 CI/CD (branch=$branch)"
 
     vcs {
-        root(DslContext.settingsRoot)
+        root(vcsRoot)
         branchFilter = "+:$branch"
         cleanCheckout = true
     }
@@ -117,6 +135,7 @@ open class ServerBuildType(
 
 open class ClientBuildType(
         private val branch: String,
+        private val vcsRoot: VcsRoot,
         private val buildMode: String,
         private val deployTargetHost: String,
         private val deployTargetPort: String,
@@ -127,7 +146,7 @@ open class ClientBuildType(
     description = "클라이언트 CI/CD (branch=$branch)"
 
     vcs {
-        root(DslContext.settingsRoot)
+        root(vcsRoot)
         branchFilter = "+:$branch"
         cleanCheckout = true
     }
