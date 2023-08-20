@@ -15,6 +15,8 @@ version = "2023.05"
 project {
     description = "yozm.cafe 프로젝트의 CI/CD 파이프라인 스크립트입니다"
 
+    // TeamCity에 프로젝트를 추가할 때 입력해야 하는 초기 값들입니다
+    // 배포 대상 서버의 정보(host, port, username)을 입력합니다.
     val deployTargetProdHost = DslContext.getParameter("deploy_target.prod.host")
     val deployTargetProdPort = DslContext.getParameter("deploy_target.prod.port")
     val deployTargetProdUsername = DslContext.getParameter("deploy_target.prod.username")
@@ -22,6 +24,7 @@ project {
     val deployTargetDevPort = DslContext.getParameter("deploy_target.dev.port")
     val deployTargetDevUsername = DslContext.getParameter("deploy_target.dev.username")
 
+    // 4개의 빌드 설정을 추가합니다
     buildType(ServerBuildType("main", "prod", deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
     buildType(ServerBuildType("dev", "dev", deployTargetDevHost, deployTargetDevPort, deployTargetDevUsername))
     buildType(ClientBuildType("main", "prod", deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
@@ -72,7 +75,7 @@ open class ServerBuildType(
             transportProtocol = SSHUpload.TransportProtocol.SCP
             sourcePath = "server/build/libs/yozm-cafe-0.0.1-SNAPSHOT.jar"
             targetUrl = "%DEPLOY_TARGET_HOST%"
-            param("jetbrains.buildServer.sshexec.port", "")
+            param("jetbrains.buildServer.sshexec.port", "%DEPLOY_TARGET_PORT%")
             authMethod = sshAgent {
                 username = "%DEPLOY_TARGET_USERNAME%"
             }
@@ -88,7 +91,7 @@ open class ServerBuildType(
                 nohup java -jar yozm-cafe-0.0.1-SNAPSHOT.jar > nohup.out 2> nohup.err < /dev/null &
             """.trimIndent()
             targetUrl = "%DEPLOY_TARGET_HOST%"
-            param("jetbrains.buildServer.sshexec.port", "")
+            param("jetbrains.buildServer.sshexec.port", "%DEPLOY_TARGET_PORT%")
             authMethod = sshAgent {
                 username = "%DEPLOY_TARGET_USERNAME%"
             }
@@ -147,7 +150,7 @@ open class ClientBuildType(
             transportProtocol = SSHUpload.TransportProtocol.SCP
             sourcePath = "client/dist/**"
             targetUrl = "%DEPLOY_TARGET_HOST%:public"
-            param("jetbrains.buildServer.sshexec.port", "")
+            param("jetbrains.buildServer.sshexec.port", "%DEPLOY_TARGET_PORT%")
             authMethod = sshAgent {
                 username = "%DEPLOY_TARGET_USERNAME%"
             }
