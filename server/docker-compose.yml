@@ -1,7 +1,6 @@
 version: "3.8"
 services:
   mysql:
-    platform: linux/arm64/v8
     image: library/mysql:8.0.33
     ports:
       - 20000:3306
