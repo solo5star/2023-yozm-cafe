@@ -13,7 +13,6 @@ import jetbrains.buildServer.configs.kotlin.triggers.vcs
 version = "2023.05"
 
 project {
-    id("YozmCafe")
     description = "yozm.cafe 프로젝트의 CI/CD 파이프라인 스크립트입니다"
 
     // TeamCity에 프로젝트를 추가할 때 입력해야 하는 초기 값들입니다
