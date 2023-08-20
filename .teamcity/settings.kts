@@ -38,12 +38,14 @@ open class ServerBuildType(
         private val deployTargetPort: String,
         private val deployTargetUsername: String,
 ) : BuildType({
-    id("YozmCafe_Server_${buildMode}")
-    name = "Server:${buildMode}"
-    description = "서버 CI/CD (branch=${branch})"
+    id("YozmCafe_Server_$buildMode")
+    name = "Server:$buildMode"
+    description = "서버 CI/CD (branch=$branch)"
 
     vcs {
         root(DslContext.settingsRoot)
+        branchFilter = "+:$branch"
+        excludeDefaultBranchChanges = true
         cleanCheckout = true
     }
 
@@ -67,7 +69,7 @@ open class ServerBuildType(
             name = "빌드"
             tasks = "clean build"
             buildFile = "server/build.gradle"
-            gradleParams = "-Pprofile=${buildMode}"
+            gradleParams = "-Pprofile=$buildMode"
             gradleWrapperPath = "server"
         }
         sshUpload {
@@ -101,7 +103,7 @@ open class ServerBuildType(
     triggers {
         vcs {
             triggerRules = "+:/server"
-            branchFilter = "+:${branch}"
+            branchFilter = "+:$branch"
         }
     }
 
@@ -121,12 +123,14 @@ open class ClientBuildType(
         private val deployTargetPort: String,
         private val deployTargetUsername: String,
 ) : BuildType({
-    id("YozmCafe_Client_${buildMode}")
-    name = "Client:${buildMode}"
-    description = "클라이언트 CI/CD (branch=${branch})"
+    id("YozmCafe_Client_$buildMode")
+    name = "Client:$buildMode"
+    description = "클라이언트 CI/CD (branch=$branch)"
 
     vcs {
         root(DslContext.settingsRoot)
+        branchFilter = "+:$branch"
+        excludeDefaultBranchChanges = true
         cleanCheckout = true
     }
 
@@ -160,7 +164,7 @@ open class ClientBuildType(
     triggers {
         vcs {
             triggerRules = "+:/client"
-            branchFilter = "+:${branch}"
+            branchFilter = "+:$branch"
         }
     }
 
