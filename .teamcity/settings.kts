@@ -14,8 +14,6 @@ import jetbrains.buildServer.configs.kotlin.vcs.GitVcsRoot
 version = "2023.05"
 
 // TeamCity에 프로젝트를 추가할 때 입력해야 하는 초기 값들입니다
-val repository = DslContext.getParameter("repository", "https://github.com/woowacourse-teams/2023-yozm-cafe")
-
 // 배포 대상 서버의 정보(host, port, username)을 입력합니다.
 val deployTargetProdHost = DslContext.getParameter("deploy_target.prod.host")
 val deployTargetProdPort = DslContext.getParameter("deploy_target.prod.port")
@@ -24,30 +22,28 @@ val deployTargetDevHost = DslContext.getParameter("deploy_target.dev.host")
 val deployTargetDevPort = DslContext.getParameter("deploy_target.dev.port")
 val deployTargetDevUsername = DslContext.getParameter("deploy_target.dev.username")
 
+object GitHubProd : GitVcsRoot({
+    name = "2023-yozm-cafe prod"
+    url = "https://github.com/woowacourse-teams/2023-yozm-cafe"
+    branch = "main"
+    branchSpec = "+:refs/heads/main"
+})
+
+object GitHubDev : GitVcsRoot({
+    name = "2023-yozm-cafe dev"
+    url = "https://github.com/woowacourse-teams/2023-yozm-cafe"
+    branch = "dev"
+    branchSpec = "+:refs/heads/dev"
+})
+
 project {
     description = "yozm.cafe 프로젝트의 CI/CD 파이프라인 스크립트입니다"
 
-    val gitHubProd = GitVcsRoot {
-        id = RelativeId("ProdVcs")
-        name = "2023-yozm-cafe prod"
-        url = repository
-        branch = "main"
-        branchSpec = "+:refs/heads/main"
-    }
-
-    val gitHubDev = GitVcsRoot {
-        id = RelativeId("DevVcs")
-        name = "2023-yozm-cafe dev"
-        url = repository
-        branch = "dev"
-        branchSpec = "+:refs/heads/dev"
-    }
-
     // 4개의 빌드 설정을 추가합니다
-    buildType(ServerBuildType("prod", gitHubProd, "main", deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
-    buildType(ServerBuildType("dev", gitHubDev, "dev", deployTargetDevHost, deployTargetDevPort, deployTargetDevUsername))
-    buildType(ClientBuildType("prod", gitHubProd, "main", deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
-    buildType(ClientBuildType("dev", gitHubDev, "dev", deployTargetDevHost, deployTargetDevPort, deployTargetDevUsername))
+    buildType(ServerBuildType("prod", GitHubProd, "main", deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
+    buildType(ServerBuildType("dev", GitHubDev, "dev", deployTargetDevHost, deployTargetDevPort, deployTargetDevUsername))
+    buildType(ClientBuildType("prod", GitHubProd, "main", deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
+    buildType(ClientBuildType("dev", GitHubDev, "dev", deployTargetDevHost, deployTargetDevPort, deployTargetDevUsername))
 }
 
 open class ServerBuildType(
