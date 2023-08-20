@@ -24,28 +24,28 @@ val deployTargetDevHost = DslContext.getParameter("deploy_target.dev.host")
 val deployTargetDevPort = DslContext.getParameter("deploy_target.dev.port")
 val deployTargetDevUsername = DslContext.getParameter("deploy_target.dev.username")
 
-object GitHubProd : GitVcsRoot({
-    name = "2023-yozm-cafe prod"
-    url = repository
-    branch = "main"
-    branchSpec = "+:refs/heads/main"
-})
-
-object GitHubDev : GitVcsRoot({
-    name = "2023-yozm-cafe dev"
-    url = repository
-    branch = "dev"
-    branchSpec = "+:refs/heads/dev"
-})
-
 project {
     description = "yozm.cafe 프로젝트의 CI/CD 파이프라인 스크립트입니다"
 
+    val gitHubProd = GitVcsRoot {
+        name = "2023-yozm-cafe prod"
+        url = repository
+        branch = "main"
+        branchSpec = "+:refs/heads/main"
+    }
+
+    val gitHubDev = GitVcsRoot {
+        name = "2023-yozm-cafe dev"
+        url = repository
+        branch = "dev"
+        branchSpec = "+:refs/heads/dev"
+    }
+
     // 4개의 빌드 설정을 추가합니다
-    buildType(ServerBuildType("prod", GitHubProd, "main", deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
-    buildType(ServerBuildType("dev", GitHubDev, "dev", deployTargetDevHost, deployTargetDevPort, deployTargetDevUsername))
-    buildType(ClientBuildType("prod", GitHubProd, "main", deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
-    buildType(ClientBuildType("dev", GitHubDev, "dev", deployTargetDevHost, deployTargetDevPort, deployTargetDevUsername))
+    buildType(ServerBuildType("prod", gitHubProd, "main", deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
+    buildType(ServerBuildType("dev", gitHubDev, "dev", deployTargetDevHost, deployTargetDevPort, deployTargetDevUsername))
+    buildType(ClientBuildType("prod", gitHubProd, "main", deployTargetProdHost, deployTargetProdPort, deployTargetProdUsername))
+    buildType(ClientBuildType("dev", gitHubDev, "dev", deployTargetDevHost, deployTargetDevPort, deployTargetDevUsername))
 }
 
 open class ServerBuildType(
